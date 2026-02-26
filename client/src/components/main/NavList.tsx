@@ -1,0 +1,110 @@
+import { Link } from "react-router-dom";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
+import navImg from '@/assets/img/Hecate Emblem.jpg'
+
+export function NavList() {
+  return (
+    <NavigationMenu viewport={false} className="z-50">
+      <NavigationMenuList>
+        <NavigationMenuItem>
+          <NavigationMenuTrigger>Home</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid gap-2 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
+              <li className="row-span-3">
+                <NavigationMenuLink asChild>
+                  <a
+                    className="from-muted/50 to-muted flex h-full w-full flex-col justify-end rounded-md bg-linear-to-b p-6 no-underline outline-hidden select-none focus:shadow-md"
+                    href="/"
+                  >
+                    <img src={navImg} alt="Olympus Logo" className="w-3/4 h-3/4 object-cover rounded-md self-center" />
+                    <div className="mt-4 mb-2 text-lg font-medium">
+                      Olimpus Official
+                    </div>
+                    <p className="text-muted-foreground text-sm leading-tight">
+                      The best clothes shop of all the world.
+                    </p>
+                  </a>
+                </NavigationMenuLink>
+              </li>
+              <ListItem href="/shop" title="Shop">
+                Acces to all your information, your deliveries, and more.
+              </ListItem>
+              <ListItem href="/offers" title="Offers">
+                Dedicated seccion to oferrs and special disscounts.
+              </ListItem>
+              <ListItem href="/about-us" title="About Us">
+                Know more about why we are the best option for you.
+              </ListItem>
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+        <NavigationMenuItem>
+          <NavigationMenuTrigger>Clothes</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid w-[300px] gap-4">
+              <li>
+                <NavigationMenuLink asChild>
+                  <Link to="/ropa-page">
+                    <div className="font-medium">All Clothes</div>
+                    <div className="text-muted-foreground">
+                      Browse all mens clothing in the shop.
+                    </div>
+                  </Link>
+                </NavigationMenuLink>
+                <NavigationMenuLink asChild>
+                  <Link to="/ropa-page">
+                    <div className="font-medium">Offered Clothes</div>
+                    <div className="text-muted-foreground">
+                      Browse all clothes with a discount.
+                    </div>
+                  </Link>
+                </NavigationMenuLink>
+                <NavigationMenuLink asChild>
+                  <Link to="/ropa-page">
+                    <div className="font-medium">Womens CLothing</div>
+                    <div className="text-muted-foreground">
+                      Browse all oversize clothing in the shop.
+                    </div>
+                  </Link>
+                </NavigationMenuLink>
+              </li>
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+        <NavigationMenuItem>
+          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+            <Link to="/news">News</Link>
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+      </NavigationMenuList>
+    </NavigationMenu>
+  );
+}
+
+function ListItem({
+  title,
+  children,
+  href,
+  ...props
+}: React.ComponentPropsWithoutRef<"li"> & { href: string }) {
+  return (
+    <li {...props}>
+      <NavigationMenuLink asChild>
+        <Link to={href}>
+          <div className="text-sm leading-none font-medium">{title}</div>
+          <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
+            {children}
+          </p>
+        </Link>
+      </NavigationMenuLink>
+    </li>
+  );
+}
