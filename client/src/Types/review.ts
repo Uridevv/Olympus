@@ -9,5 +9,7 @@ export interface Review {
     opinion: string;
     likes:number;
     dislikes:number;
+    likedBy?: string[];
+    dislikedBy?: string[];
     createdAt: string;
 }

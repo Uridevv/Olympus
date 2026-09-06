@@ -2,6 +2,7 @@ import Offer from '../models/offer.model.js'
 import Product from '../models/product.model.js'
 import cloudinary from '../cloudinary.js'
 import multer from 'multer'
+import { applyOfferDiscountToProducts, restoreProductsPrices } from '../libs/offerPricing.js'
 
 const storage = multer.memoryStorage();
 
@@ -12,6 +13,21 @@ export const createOffer = async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ message: 'No se proporcionó ninguna imagen para la oferta.' });
+        }
+
+        const productIds = JSON.parse(req.body.products);
+
+        // Un producto no puede pertenecer a más de una oferta a la vez.
+        const conflictingProducts = await Product.find({
+            _id: { $in: productIds },
+            'offered.offers.0': { $exists: true }
+        }, 'name');
+
+        if (conflictingProducts.length > 0) {
+            return res.status(409).json({
+                message: 'Uno o más productos ya se encuentran en otra oferta.',
+                products: conflictingProducts.map(p => ({ id: p._id, name: p.name })),
+            });
         }
 
         // Subir la imagen a Cloudinary
@@ -28,7 +44,6 @@ export const createOffer = async (req, res) => {
         });
 
         if (!result || !result.secure_url || !result.public_id) {
-            console.error('Error al subir a Cloudinary o datos incompletos:', result);
             return res.status(500).json({ message: 'Error al procesar la imagen con Cloudinary o datos de imagen incompletos.' });
         }
 
@@ -52,9 +67,6 @@ export const createOffer = async (req, res) => {
 
         if (!offerSaved) return res.status(500).json({ message: "Error saving offer." })
 
-        // Obtener productos desde el body
-        const productIds = JSON.parse(req.body.products);
-
         // Actualizar los productos para añadir la oferta
         await Product.updateMany(
             { _id: { $in: productIds } },
@@ -63,6 +75,9 @@ export const createOffer = async (req, res) => {
                 $addToSet: { "offered.offers": offerSaved._id }
             }
         );
+
+        // Aplicar el descuento de la oferta al precio de los productos
+        await applyOfferDiscountToProducts(productIds, offerSaved.discount);
 
         return res.status(201).json(offerSaved);
     } catch (error) {
@@ -148,7 +163,6 @@ export const updateOffer = async (req, res) => {
 
         let updateData = { ...req.body };
         updateData.discount = parseFloat(updateData.discount) || 0;
-        console.log(updateData)
         const offerToUpdate = await Offer.findById(id);
         if (!offerToUpdate) return res.status(404).json({ message: "Offer not found." });
 
@@ -176,17 +190,51 @@ export const updateOffer = async (req, res) => {
         if (req.body.products) {
             const newProductIds = JSON.parse(req.body.products);
 
+            const previousProductIds = await Product.find({ "offered.offers": id }, '_id')
+                .then(list => list.map(product => product._id.toString()));
+
+            // Un producto no puede pertenecer a más de una oferta a la vez:
+            // solo validamos los productos que se están agregando recién a esta oferta.
+            const incomingProductIds = newProductIds.filter(pid => !previousProductIds.includes(pid));
+
+            if (incomingProductIds.length > 0) {
+                const conflictingProducts = await Product.find({
+                    _id: { $in: incomingProductIds },
+                    'offered.offers.0': { $exists: true }
+                }, 'name');
+
+                if (conflictingProducts.length > 0) {
+                    return res.status(409).json({
+                        message: 'Uno o más productos ya se encuentran en otra oferta.',
+                        products: conflictingProducts.map(p => ({ id: p._id, name: p.name })),
+                    });
+                }
+            }
+
             // Quitar oferta de todos los productos que la tengan
             await Product.updateMany(
                 { "offered.offers": id },
-                { $pull: { "offered.offers": id }, $set: { "offered.isOffered": false } }
+                { $pull: { "offered.offers": id } }
             );
+
+            // Restaurar el precio original de los productos que dejaron de tener la oferta
+            await restoreProductsPrices(previousProductIds);
 
             // Añadir oferta a los nuevos productos
             await Product.updateMany(
                 { _id: { $in: newProductIds } },
-                { $set: { "offered.isOffered": true }, $addToSet: { "offered.offers": id } }
+                { $addToSet: { "offered.offers": id } }
             );
+
+            // Aplicar el descuento (posiblemente actualizado) a los nuevos productos
+            await applyOfferDiscountToProducts(newProductIds, updatedOffer.discount);
+        } else {
+            // No cambiaron los productos, pero el descuento pudo haber cambiado:
+            // recalcular el precio de los productos ya vinculados a esta oferta.
+            const linkedProductIds = await Product.find({ "offered.offers": id }, '_id')
+                .then(list => list.map(product => product._id.toString()));
+
+            await applyOfferDiscountToProducts(linkedProductIds, updatedOffer.discount);
         }
 
         return res.status(200).json(updatedOffer);
@@ -204,6 +252,16 @@ export const deleteOffer = async (req, res) => {
         const offerFound = await Offer.findByIdAndDelete(id)
 
         if (!offerFound) return res.status(404).json({ message: "Offer not found." })
+
+        const linkedProductIds = await Product.find({ "offered.offers": id }, '_id')
+            .then(list => list.map(product => product._id.toString()));
+
+        await Product.updateMany(
+            { "offered.offers": id },
+            { $pull: { "offered.offers": id } }
+        );
+
+        await restoreProductsPrices(linkedProductIds);
 
         return res.status(200).json(offerFound);
 

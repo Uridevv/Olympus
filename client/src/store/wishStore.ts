@@ -68,6 +68,11 @@ export const useWish = create<WishStore>((set) => ({
         return set({ wishList: [] });
       }
 
+      if (user?.role === "admin" || user?.role === "manager") {
+        console.warn("Los administradores no pueden agregar productos a la wishlist");
+        return;
+      }
+
       const res = await addWishItem(userId, newItem);
       const wishData = res.data.wishList;
 

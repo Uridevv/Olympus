@@ -94,7 +94,7 @@ export const register = async (req, res) => {
 }
 
 export const registerNewAdmin = async (req, res) => {
-  const { userImage, name, lastName, email, phoneNumber, password, role } = req.body
+  const { name, lastName, email, phoneNumber, password, role } = req.body
   try {
 
     //Verificar que no exista.
@@ -111,7 +111,7 @@ export const registerNewAdmin = async (req, res) => {
       email,
       phoneNumber,
       password: passwordHash,
-      role
+      role: role || "admin"
     })
 
     //Guardar el usuario en la BD.
@@ -127,7 +127,6 @@ export const registerNewAdmin = async (req, res) => {
     //Devolvemos los datos en el response.
     res.json({
       _id: userSaved._id,
-      userImage,
       name,
       lastName,
       email,
@@ -144,7 +143,6 @@ export const registerNewAdmin = async (req, res) => {
 
 export const loginAdminAuth0 = async (req, res) => {
   const { name, lastName, email, auth0Sub, auth0Verification, userImage, role } = req.body
-  console.log(req.body)
   try {
 
     //Verificar que no exista, si existe, iniciamos sesion.
@@ -234,21 +232,18 @@ export const verifyOtpLogin = async (req, res) => {
     }
 
     const userFound = await User.findById(decoded.id);
-    console.log(userFound)
     if (!userFound) {
       return res.status(404).json({ message: "User not found" });
     }
 
     // Buscar OTP en DB
     const otpFound = await OTP.findOne({ email: "calogerou1406@gmail.com" });
-    console.log(otpFound)
     if (!otpFound || otpFound.code !== otp) {
       return res.status(400).json({ message: "Invalid OTP" });
     }
 
     // ✅ OTP válido → crear token real de sesión
     const token = await createAccessToken({ id: userFound._id });
-    console.log(token)
 
     res.cookie("token", token, { sameSite: "none", secure: true, httpOnly: false });
     return res.json(userFound );
@@ -335,7 +330,6 @@ export const logout = (req, res) => {
 
 export const verifyToken = (req, res) => {
   const { token } = req.cookies
-  console.log(token)
 
   if (!token) res.status(401).json({ message: 'Unauthorized.' })
 
@@ -347,7 +341,6 @@ export const verifyToken = (req, res) => {
 
     const userFound = await User.findById(decoded.id)
     if (!userFound) {
-      console.log(userFound)
       res.status(401).json({ message: 'Unauthorized, USer not found.' })
     }
     return res.json({

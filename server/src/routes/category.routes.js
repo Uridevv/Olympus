@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getCategories,addCategory,deleteCategory, getCategory, updateCategory } from '../controllers/category.controllers.js'
+import { getCategories,addCategory,deleteCategory, getCategory, updateCategory } from '../controllers/category.controller.js'
 import { validateSchema } from '../middlewares/validateSchema.js'
 import { CategorySchema } from '../schemas/category.schema.js'
 

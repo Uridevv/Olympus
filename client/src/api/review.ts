@@ -20,3 +20,9 @@ export const getReviewsByUser = (userId: string) =>
 
 export const deleteReview = (reviewId: string) =>
   axios.delete(`/delete-review/${reviewId}`);
+
+export const likeReview = (reviewId: string, userId: string) =>
+  axios.post<Review>(`/like-review/${reviewId}`, { userId });
+
+export const dislikeReview = (reviewId: string, userId: string) =>
+  axios.post<Review>(`/dislike-review/${reviewId}`, { userId });

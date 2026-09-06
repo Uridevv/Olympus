@@ -7,16 +7,23 @@ import { AddParameterProduct } from "../components/admin/playground/createProduc
 import { useNavigate, useParams } from "react-router-dom";
 import { getProduct, updateProduct } from "../api/product.js";
 import { getProductAllImages } from "../api/productImages.js";
-import {  Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   ProductFormData,
   ProductImageForm,
   ProductImage,
-  ImageFile,
-} from "../types/productType.ts";
+} from "../Types/productType.ts";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator.tsx";
 import {
@@ -85,13 +92,23 @@ export function UpdateProductForm() {
     }
 
     if (params.id) {
-      loadProductData();
-      getProductImages();
+      // Se cargan primero los colores del producto y luego sus imágenes:
+      // el <select> de color de cada imagen necesita que sus <option>
+      // (los colores del producto) ya existan para poder mostrar
+      // seleccionado el color que trae cada imagen. Si las imágenes
+      // llegaran antes (peticiones en paralelo, orden no garantizado),
+      // el <select> se renderiza sin opciones todavía y el navegador
+      // cae por defecto al primer color para todas las imágenes.
+      (async () => {
+        await loadProductData();
+        await getProductImages();
+      })();
     }
   }, []);
 
   const onSubmit: SubmitHandler<ProductFormData> = async (data) => {
-    try {
+  toast.promise(
+    (async () => {
       data.colors = colors.filter((c) => c !== "Nuevo Valor");
       data.size = size;
       data.price = parseInt(data.price.toString());
@@ -99,20 +116,16 @@ export function UpdateProductForm() {
       data.active = isActive;
 
       if (params.id) {
-        const res = await toast.promise(updateProduct(params.id, data), {
-          loading: "Actualizando producto...",
-          success: "Producto actualizado correctamente.",
-          error: "Hubo un error al actualizar el producto.",
-        });
+        const res = await updateProduct(params.id, data);
+        if (!res) throw new Error("Producto no actualizado");
 
-        if (!res) throw new Error("Producto no actualizado correctamente");
-
+        // update imágenes
         const imagesToUpdate: ProductImage[] = productImages
           .filter((item, index): item is ProductImage => {
             const hasChanged =
               JSON.stringify(item) !== JSON.stringify(productImagesCopy[index]);
-            const isNotFile = !(item as ProductImageForm).file; // Verificamos si la propiedad 'file' no existe
-            return hasChanged && isNotFile && "_id" in item; // Aseguramos que tenga la propiedad '_id' de ProductImage
+            const isNotFile = !(item as ProductImageForm).file;
+            return hasChanged && isNotFile && "_id" in item;
           })
           .map((item) => ({
             _id: item._id,
@@ -121,19 +134,15 @@ export function UpdateProductForm() {
             public_id: item.public_id,
             productId: item.productId,
           }));
+
         if (imagesToUpdate.length > 0) await updateImages(imagesToUpdate);
 
-        //Imagenes a subir a render.
         const imagesUpload = productImages.filter(
           (image) => "file" in image && image.file instanceof File
         );
 
-        // Subir imagenes a la base de datos despues de tener la url.
         if (imagesUpload.length > 0) {
-          // Subir a cloudinary y obtener las urls.
-          const urls: ImageFile[] = await uploadImages(imagesUpload, params.id);
-
-          // SUbir imagenes a la base de datos.
+          const urls = await uploadImages(imagesUpload, params.id);
           await createImagesProduct(urls, params.id);
         }
 
@@ -155,36 +164,34 @@ export function UpdateProductForm() {
           }));
 
         if (imagesToDelete.length > 0) {
-          deleteImagesDb(imagesToDelete);
-          deleteImagesFromCloudinary(imagesToDelete);
+          await deleteImagesDb(imagesToDelete);
+          await deleteImagesFromCloudinary(imagesToDelete);
         }
-
-        navigate("/admin/playground/stock");
+        await getProducts();
+        return "Producto actualizado correctamente";
       } else {
         const res = await createProduct(data);
-        if (!res) throw new Error("Producto no creado correctamente");
+        if (!res) throw new Error("Producto no creado");
 
-        const imageUrls: ImageFile[] = await uploadImages(
-          productImages,
-          res._id!
-        );
-        await toast.promise(createImagesProduct(imageUrls, res._id), {
-          loading: "Loading...",
-          success: () => {
-            setTimeout(() => {
-              navigate("/admin/playground/stock");
-            }, 2000);
-            return "Product created successfully! Redirecting...";
-          },
-          error: "Error",
-        });
+        const imageUrls = await uploadImages(productImages, res._id!);
+        await createImagesProduct(imageUrls, res._id);
 
-        getProducts();
+        return "Producto creado correctamente";
       }
-    } catch (error) {
-      console.error(error);
+    })(),
+    {
+      loading: "Procesando producto...",
+      success: (msg) => {
+        setTimeout(async () => {
+          await getProducts();
+          navigate("/admin/playground/stock");
+        }, 2000);
+        return msg;
+      },
+      error: "Hubo un error en el proceso",
     }
-  };
+  );
+};
 
   const OnCLickDeleteProduct = async () => {
     try {
@@ -215,7 +222,8 @@ export function UpdateProductForm() {
         toast.promise(deleteProduct(params.id), {
           loading: "Eliminando producto...",
           success: () => {
-            setTimeout(() => {
+            setTimeout(async() => {
+              await getProducts();
               navigate("/admin/playground/stock");
             }, 2000);
             return "Product deleted successfully! Redirecting...";
@@ -234,135 +242,206 @@ export function UpdateProductForm() {
 
   return (
     <>
-      <div className="h-full">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl mb-4 font-bold">
-            {params.id ? "Update Product" : "Crear Product"}
-          </h1>
-          <div className="flex items-center justify-between space-x-2">
-            <Label htmlFor="airplane-mode">Active</Label>
-            <Switch id="" checked={isActive} onClick={handleActiveChange} />
+      <div className="mx-auto flex max-w-4xl flex-col gap-6 pb-10">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              {params.id ? "Editar producto" : "Crear producto"}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {params.id
+                ? "Actualiza la información, imágenes, colores y tallas del producto."
+                : "Completa los datos para publicar un nuevo producto en la tienda."}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 rounded-lg border bg-card px-4 py-2">
+            <Label htmlFor="product-active" className="text-sm font-medium">
+              Producto activo
+            </Label>
+            <Switch
+              id="product-active"
+              checked={isActive}
+              onClick={handleActiveChange}
+            />
           </div>
         </div>
+
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col rounded-lg p-4 backdrop-blur-[200px] border-gray-700 gap-7"
+          className="flex flex-col gap-6"
         >
-          <Label htmlFor="" className="text-xl">
-            Product Name:
-          </Label>
-          <Input
-            type="text"
-            placeholder="Product Name"
-            className="border-gray-600 outline-0 text-xl"
-            {...register("name", { required: true })}
-          />
-          <Separator />
-          <Label htmlFor="" className="text-xl">
-            Product Description:
-          </Label>
-          <Textarea
-            className="border-gray-600 outline-0 text-xl"
-            placeholder="Description"
-            {...register("description", { required: true })}
-          ></Textarea>
-          <Separator />
-          <div className="flex h-15 space-x-4 text-sm justify-between">
-            <div className="flex flex-col w-1/2 items-center">
-              <Label htmlFor="" className="text-xl">
-                Product Price:
-              </Label>
-              <Input
-                type="number"
-                className="border-gray-600 outline-0 text-xl mt-5 w-1/2 text-center"
-                placeholder="Price"
-                min={0}
-                {...register("price", { required: true })}
+          <Card>
+            <CardHeader>
+              <CardTitle>Información general</CardTitle>
+              <CardDescription>
+                Nombre y descripción visibles para los clientes.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-5">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Nombre del producto</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Ej. Camisa de lino"
+                  {...register("name", { required: true })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="description">Descripción</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Describe el producto..."
+                  className="min-h-32"
+                  {...register("description", { required: true })}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Precio e inventario</CardTitle>
+              <CardDescription>
+                Define el precio de venta y las unidades disponibles.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-5 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="price">Precio</Label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground">
+                    $
+                  </span>
+                  <Input
+                    id="price"
+                    type="number"
+                    min={0}
+                    placeholder="0.00"
+                    className="pl-7"
+                    {...register("price", { required: true })}
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="stock">Stock</Label>
+                <Input
+                  id="stock"
+                  type="number"
+                  min={0}
+                  placeholder="0"
+                  {...register("stock", { required: true })}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Categoría</CardTitle>
+              <CardDescription>
+                Selecciona en qué categoría del catálogo aparecerá.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Controller
+                name="category"
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <Select
+                    onValueChange={(value) => {
+                      if (value === "add-category") {
+                        setIsAddCategoryModalOpen(true);
+                        return;
+                      }
+                      field.onChange(value);
+                    }} // Vincula el cambio de valor
+                    value={field.value} // Muestra el valor actual de React Hook Form
+                    // No necesitas `defaultValue` si `value` está controlado por RHF
+                  >
+                    <SelectTrigger className="w-full">
+                      {/* Usa SelectValue para mostrar el valor seleccionado */}
+                      <SelectValue placeholder="Selecciona una categoría" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Categorías</SelectLabel>
+                        <SelectItem value="select" className="text-gray-500">
+                          Select Category
+                        </SelectItem>
+                        {categories.map((category) => (
+                          <SelectItem value={category._id} key={category._id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+
+                        <SelectItem value="add-category">
+                          Add Category
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
               />
-            </div>
+            </CardContent>
+          </Card>
 
-            <Separator orientation="vertical" />
-
-            <div className="flex flex-col w-1/2 items-center">
-              <Label htmlFor="" className="text-xl">
-                Product Stock:
-              </Label>
-              <Input
-                type="number"
-                className="border-gray-600 outline-0 text-xl mt-5 w-1/2 text-center"
-                placeholder="Stock"
-                min={0}
-                {...register("stock", { required: true })}
+          <Card>
+            <CardHeader>
+              <CardTitle>Colores y tallas</CardTitle>
+              <CardDescription>
+                Variantes disponibles para este producto.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-6">
+              <AddParameterProduct
+                parameters={colors}
+                setParameters={setColors}
+                name={"Colores"}
               />
-            </div>
-          </div>
-          <Separator className="mt-10" />
-          <Label className="text-xl">Category:</Label>
-          <Controller
-            name="category"
-            control={control}
-            rules={{ required: true }}
-            render={({ field }) => (
-              <Select
-                onValueChange={(value) => {
-                  if (value === "add-category") {
-                    setIsAddCategoryModalOpen(true);
-                    return;
-                  }
-                  field.onChange(value);
-                }} // Vincula el cambio de valor
-                value={field.value} // Muestra el valor actual de React Hook Form
-                // No necesitas `defaultValue` si `value` está controlado por RHF
-              >
-                <SelectTrigger className="w-full">
-                  {/* Usa SelectValue para mostrar el valor seleccionado */}
-                  <SelectValue placeholder="Selecciona una categoría" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Categorías</SelectLabel>
-                    <SelectItem value="select" className="text-gray-500">Select Category</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem value={category._id} key={category._id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
+              <Separator />
+              <AddParameterProduct
+                parameters={size}
+                setParameters={setSize}
+                name={"Tallas"}
+              />
+            </CardContent>
+          </Card>
 
-                    <SelectItem value="add-category">Add Category</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            )}
-          />
-          <Separator className="mt-10" />
-          <AddParameterProduct
-            parameters={colors}
-            setParameters={setColors}
-            name={"Colors"}
-          />
-          <AddParameterProduct
-            parameters={size}
-            setParameters={setSize}
-            name={"Size"}
-          />
-          <ImageSelect
-            productImages={productImages}
-            setProductImages={setProductImages}
-            colors={colors}
-          />
-          <div className="flex justify-between items-center">
+          <Card>
+            <CardHeader>
+              <CardTitle>Imágenes</CardTitle>
+              <CardDescription>
+                Sube al menos una imagen por color disponible.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ImageSelect
+                productImages={productImages}
+                setProductImages={setProductImages}
+                colors={colors}
+              />
+            </CardContent>
+          </Card>
+
+          <div
+            className={`flex items-center gap-4 rounded-lg border bg-card p-4 ${
+              params.id ? "justify-between" : "justify-end"
+            }`}
+          >
             {params.id && (
-              <button
+              <Button
                 type="button"
-                className="text-foreground border-1 bg-red-800 rounded-sm w-1/4 m-auto p-3 hover:bg-red-700 hover:cursor-pointer"
+                variant="destructive"
                 onClick={OnCLickDeleteProduct}
               >
-                Delete Product
-              </button>
+                Eliminar producto
+              </Button>
             )}
-            <button className="border-1 text-foreground rounded-sm w-1/4 m-auto p-3  hover:cursor-pointer bg-sky-700 hover:bg-sky-600">
-              {params.id ? "Update Product" : "Crear Product"}
-            </button>
+            <Button type="submit" size="lg">
+              {params.id ? "Guardar cambios" : "Crear producto"}
+            </Button>
           </div>
         </form>
       </div>

@@ -55,7 +55,12 @@ export function SimilarProducts({
               className="group relative hover:bg-background-hover p-1 rounded-md hover:cursor-pointer"
               onClick={() => navigate(`/product-detail/${product._id}`)}
             >
-              <div className="aspect-[3/4] w-full overflow-hidden rounded-lg ">
+              <div className="aspect-[3/4] w-full overflow-hidden rounded-lg relative">
+                {product.offered.isOffered && (
+                  <div className="absolute top-2 left-2 z-10 rounded-lg bg-red-500 text-white font-bold px-2 py-1 text-xs">
+                    Offered
+                  </div>
+                )}
                 <img
                   alt={product.name}
                   className="h-full w-full object-cover object-center transition-opacity"

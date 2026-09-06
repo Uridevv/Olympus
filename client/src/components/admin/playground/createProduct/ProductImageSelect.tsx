@@ -1,4 +1,5 @@
-import { ProductImageSelec } from "../../../../types/productType";
+import { ImagePlus } from "lucide-react";
+import { ProductImageSelec } from "../../../../Types/productType";
 
 interface ProductImageSelectProps {
   addProductImage: (image:ProductImageSelec) => void;
@@ -6,19 +7,22 @@ interface ProductImageSelectProps {
 }
 
 export function ProductImageSelect({ addProductImage, color }:ProductImageSelectProps) {
-  
+
   const handleImageChange = (e:React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file != null) {
       addProductImage({ file, color });
     }
+    e.target.value = "";
   };
 
   return (
-    <>
-      <label htmlFor="fileInput" className="border-1 border-dashed rounded-lg p-4 flex items-center hover:cursor-pointer border-foreground">
-        Add Image +
-      </label>
+    <label
+      htmlFor="fileInput"
+      className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-muted-foreground/30 text-muted-foreground transition-colors hover:cursor-pointer hover:border-primary hover:text-primary"
+    >
+      <ImagePlus className="size-8" />
+      <span className="text-center text-sm font-medium">Agregar imagen</span>
       <input
         id="fileInput"
         type="file"
@@ -26,6 +30,6 @@ export function ProductImageSelect({ addProductImage, color }:ProductImageSelect
         className="hidden"
         onChange={handleImageChange}
       />
-    </>
+    </label>
   );
 }

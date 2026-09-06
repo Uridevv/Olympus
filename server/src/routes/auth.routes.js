@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { register, login, logout, profile, verifyToken, registerNewAdmin, loginWithAuth0, loginAdminAuth0, getUser, verifyOtpLogin } from '../controllers/auth.controllers.js'
+import { register, login, logout, profile, verifyToken, registerNewAdmin, loginWithAuth0, loginAdminAuth0, getUser, verifyOtpLogin } from '../controllers/auth.controller.js'
 import { validateSchema } from '../middlewares/validateSchema.js'
 import { registerSchema, loginSchema } from '../schemas/auth.schema.js'
 import { authRequired } from '../middlewares/authReuqired.js'

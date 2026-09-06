@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getProductImages, createProductImage, deleteProductImage, getProductImage, getAllProductImages, updateProductImage, deleteProductImageCloudinary, deleteImage } from '../controllers/productImages.controllers.js'
+import { getProductImages, createProductImage, deleteProductImage, getProductImage, getAllProductImages, updateProductImage, deleteProductImageCloudinary, deleteImage } from '../controllers/productImages.controller.js'
 import { validateSchema } from '../middlewares/validateSchema.js'
 import { ProductImageSchema } from '../schemas/productImage.schema.js'
 

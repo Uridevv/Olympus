@@ -26,6 +26,7 @@ export interface Product {
   name: string;
   description: string;
   price: number;
+  originalPrice?: number | null;
   stock:number;
   category: string;
   colors:string[];

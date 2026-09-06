@@ -1,5 +1,5 @@
 import { OfferTarget } from "@/components/admin/others/offers/OfferTarget";
-import { Offer } from "@/types/offerType";
+import { Offer } from "@/Types/offerType";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getAllOffers } from "@/api/offer";

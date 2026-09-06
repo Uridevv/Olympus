@@ -187,7 +187,7 @@ export const useAuth = create<authStore>((set) => ({
     const cookies = Cookies.get();
 
     if (!cookies.token) {
-      ({ isAuthenticated: false, loading: false, user: null });
+      set({ isAuthenticated: false, loading: false, user: null });
       return null;
     }
 

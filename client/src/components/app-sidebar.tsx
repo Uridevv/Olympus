@@ -81,14 +81,6 @@ const data = {
           title: "Sells",
           url: "/admin/stats/sells",
         },
-        {
-          title: "Users",
-          url: "/admin/stats/users",
-        },
-        {
-          title: "Products",
-          url: "/admin/stats/products",
-        },
       ],
     },
     {

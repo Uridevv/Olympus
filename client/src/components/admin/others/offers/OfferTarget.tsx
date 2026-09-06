@@ -1,4 +1,4 @@
-import { Offer } from "@/types/offerType";
+import { Offer } from "@/Types/offerType";
 import { useNavigate } from "react-router-dom";
 import { Edit, Eye } from "lucide-react";
 

@@ -17,8 +17,16 @@ export const getProductsInOffer = (offerId:string) => {
   return axios.get<Product[]>(`/getProductsInOffer/${offerId}`)
 }
 
+export interface ProductOffered {
+  _id: string;
+  offered: {
+    isOffered?: boolean;
+    offers: Offer[];
+  };
+}
+
 export const getOffersByProduct = (productId:string) => {
-  return axios.get<Offer[]>(`/getOffersByProduct/${productId}`)
+  return axios.get<ProductOffered>(`/getOffersByProduct/${productId}`)
 }
 
 export const updateOffer = (id: string, offerData: FormData | OfferFormData) => {

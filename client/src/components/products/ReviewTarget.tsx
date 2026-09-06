@@ -1,48 +1,72 @@
+import { likeReview, dislikeReview } from "@/api/review";
+import { useAuth } from "@/store/authStore";
 import { Review } from "@/Types/review";
 import { Star, ThumbsUp, ThumbsDown } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export function ReviewTarget({ review }: { review: Review }) {
+  const userId = useAuth((state) => state.user?._id);
+
   const [likes, setLikes] = useState<number>(0);
   const [dislikes, setDislikes] = useState<number>(0);
-  const [isLiked, setIsLiked] = useState<"like" | "dislike" | false>(false);
+  const [reaction, setReaction] = useState<"like" | "dislike" | false>(false);
   const [stars, setStars] = useState<number>(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setLikes(review.likes || 0);
     setDislikes(review.dislikes || 0);
     setStars(review.rating || 5);
-  }, [review]);
 
-  const handleLike = () => {
-    if (isLiked === "like") {
-      setLikes(likes - 1);
-      setIsLiked(false);
+    if (userId && review.likedBy?.includes(userId)) {
+      setReaction("like");
+    } else if (userId && review.dislikedBy?.includes(userId)) {
+      setReaction("dislike");
+    } else {
+      setReaction(false);
     }
-    if (isLiked === "dislike") {
-      setDislikes(dislikes - 1);
-      setLikes(likes + 1);
-      setIsLiked("like");
+  }, [review, userId]);
+
+  const handleLike = async () => {
+    if (!userId) {
+      toast.error("Necesitas iniciar sesión para calificar una reseña");
+      return;
     }
-    if (isLiked === false) {
-      setLikes(likes + 1);
-      setIsLiked("like");
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const res = await likeReview(review._id, userId);
+      setLikes(res.data.likes);
+      setDislikes(res.data.dislikes);
+      setReaction(res.data.likedBy?.includes(userId) ? "like" : false);
+    } catch (error) {
+      console.error("Error al dar like a la reseña:", error);
+      toast.error("No se pudo registrar el like, intenta de nuevo");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleDislike = () => {
-    if (isLiked === "dislike") {
-      setDislikes(dislikes - 1);
-      setIsLiked(false);
+  const handleDislike = async () => {
+    if (!userId) {
+      toast.error("Necesitas iniciar sesión para calificar una reseña");
+      return;
     }
-    if (isLiked === "like") {
-      setLikes(likes - 1);
-      setDislikes(dislikes + 1);
-      setIsLiked("dislike");
-    }
-    if (isLiked === false) {
-      setDislikes(likes + 1);
-      setIsLiked("dislike");
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const res = await dislikeReview(review._id, userId);
+      setLikes(res.data.likes);
+      setDislikes(res.data.dislikes);
+      setReaction(res.data.dislikedBy?.includes(userId) ? "dislike" : false);
+    } catch (error) {
+      console.error("Error al dar dislike a la reseña:", error);
+      toast.error("No se pudo registrar el dislike, intenta de nuevo");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -78,20 +102,32 @@ export function ReviewTarget({ review }: { review: Review }) {
             {review.opinion}
           </p>
           <div className="mt-4 flex items-center gap-6 text-sm text-gray-500 dark:text-gray-400">
-            <button className="flex items-center gap-1.5 hover:text-primary transition-colors">
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleLike}
+              className="flex items-center gap-1.5 hover:text-primary transition-colors disabled:opacity-50"
+            >
               <span className="material-symbols-outlined text-lg">
                 <ThumbsUp
-                  onClick={handleLike}
-                  className={isLiked === "like" ? "text-neutral-50" : ""}
+                  className={
+                    reaction === "like" ? "text-primary fill-primary" : ""
+                  }
                 />
               </span>
               <span>{likes}</span>
             </button>
-            <button className="flex items-center gap-1.5 hover:text-primary transition-colors">
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleDislike}
+              className="flex items-center gap-1.5 hover:text-primary transition-colors disabled:opacity-50"
+            >
               <span className="material-symbols-outlined text-lg">
                 <ThumbsDown
-                  onClick={handleDislike}
-                  className={isLiked === "dislike" ? "text-neutral-50" : ""}
+                  className={
+                    reaction === "dislike" ? "text-primary fill-primary" : ""
+                  }
                 />
               </span>
               <span>{dislikes}</span>

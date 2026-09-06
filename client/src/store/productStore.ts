@@ -28,9 +28,19 @@ interface ProductPreview extends Product {
 
 interface ProductState {
   products: Product[];
+  productsPage: number;
+  productsTotalPages: number;
+  hasMoreProducts: boolean;
+  isLoadingProducts: boolean;
   productsActive:ProductPreview[];
+  productsActivePage: number;
+  productsActiveTotalPages: number;
+  hasMoreProductsActive: boolean;
+  isLoadingProductsActive: boolean;
   getProducts: () => Promise<any>;
+  loadMoreProducts: () => Promise<any>;
   getProductsActive: () => Promise<any>;
+  loadMoreProductsActive: () => Promise<any>;
   getOneProduct: (productId: string) => Promise<Product | null>;
   createProduct: (product: ProductCreate) => Promise<Product>;
   uploadImages: (
@@ -53,28 +63,97 @@ interface ProductState {
   }) => Promise<any>;
 }
 
-export const useProduct = create<ProductState>((set) => ({
+export const useProduct = create<ProductState>((set, get) => ({
   products: [],
+  productsPage: 1,
+  productsTotalPages: 1,
+  hasMoreProducts: true,
+  isLoadingProducts: false,
   productsActive:[],
+  productsActivePage: 1,
+  productsActiveTotalPages: 1,
+  hasMoreProductsActive: true,
+  isLoadingProductsActive: false,
 
-  // Obtener todos los productos
+  // Obtener la primera página de productos (reinicia la lista acumulada)
   getProducts: async () => {
     try {
-      const res = await getAllProducts();
-      set({ products: res.data });
+      set({ isLoadingProducts: true });
+      const res = await getAllProducts(1);
+      set({
+        products: res.data.products,
+        productsPage: res.data.page,
+        productsTotalPages: res.data.totalPages,
+        hasMoreProducts: res.data.hasMore,
+      });
       return res;
     } catch (error) {
       console.log(error);
+    } finally {
+      set({ isLoadingProducts: false });
     }
   },
 
-  getProductsActive: async () => {
+  // Cargar la siguiente página de productos y anexarla a la ya cargada (lazy load)
+  loadMoreProducts: async () => {
+    const { hasMoreProducts, isLoadingProducts, productsPage } = get();
+    if (!hasMoreProducts || isLoadingProducts) return;
+
     try {
-      const res = await getAllProductsActive();
-      set({ productsActive: res.data });
+      set({ isLoadingProducts: true });
+      const res = await getAllProducts(productsPage + 1);
+      set((state) => ({
+        products: [...state.products, ...res.data.products],
+        productsPage: res.data.page,
+        productsTotalPages: res.data.totalPages,
+        hasMoreProducts: res.data.hasMore,
+      }));
       return res;
     } catch (error) {
       console.log(error);
+    } finally {
+      set({ isLoadingProducts: false });
+    }
+  },
+
+  // Obtener la primera página de productos activos (reinicia la lista acumulada)
+  getProductsActive: async () => {
+    try {
+      set({ isLoadingProductsActive: true });
+      const res = await getAllProductsActive(1);
+      set({
+        productsActive: res.data.products,
+        productsActivePage: res.data.page,
+        productsActiveTotalPages: res.data.totalPages,
+        hasMoreProductsActive: res.data.hasMore,
+      });
+      return res;
+    } catch (error) {
+      console.log(error);
+    } finally {
+      set({ isLoadingProductsActive: false });
+    }
+  },
+
+  // Cargar la siguiente página de productos activos y anexarla a la ya cargada (lazy load)
+  loadMoreProductsActive: async () => {
+    const { hasMoreProductsActive, isLoadingProductsActive, productsActivePage } = get();
+    if (!hasMoreProductsActive || isLoadingProductsActive) return;
+
+    try {
+      set({ isLoadingProductsActive: true });
+      const res = await getAllProductsActive(productsActivePage + 1);
+      set((state) => ({
+        productsActive: [...state.productsActive, ...res.data.products],
+        productsActivePage: res.data.page,
+        productsActiveTotalPages: res.data.totalPages,
+        hasMoreProductsActive: res.data.hasMore,
+      }));
+      return res;
+    } catch (error) {
+      console.log(error);
+    } finally {
+      set({ isLoadingProductsActive: false });
     }
   },
 

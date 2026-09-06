@@ -11,23 +11,34 @@ interface ProductTargetProps {
 
 export function ProductTarget({ product }: ProductTargetProps) {
   const navigate = useNavigate();
+  const isOutOfStock = product.stock <= 0;
 
   return (
     <div
-      className="rounded-2xl flex flex-col gap-3 hover:bg-secondary-background transition duration-75 ease-in-out h-[27em] text-foreground p-2 box-border w-full relative hover:cursor-pointer"
+      className={`rounded-2xl flex flex-col gap-3 transition duration-75 ease-in-out h-[27em] text-foreground p-2 box-border w-full relative hover:cursor-pointer ${
+        isOutOfStock ? "opacity-70" : "hover:bg-secondary-background"
+      }`}
       onClick={() => {
         navigate(`/product-detail/${product._id}`);
       }}
     >
-      {product.offered.isOffered && ( // Se renderiza solo si "offered" es true
-        <div className="absolute top-2 left-2 rounded-lg bg-red-500 text-white font-bold px-2 py-1 text-xs">
-          Offered
+      {isOutOfStock ? (
+        <div className="absolute top-2 left-2 z-10 rounded-lg bg-neutral-900 text-white font-bold px-2 py-1 text-xs uppercase tracking-wide border border-white/20">
+          Agotado
         </div>
+      ) : (
+        product.offered.isOffered && ( // Se renderiza solo si "offered" es true
+          <div className="absolute top-2 left-2 rounded-lg bg-red-500 text-white font-bold px-2 py-1 text-xs">
+            Offered
+          </div>
+        )
       )}
       <div className="h-3/5 w-full flex justify-center">
         <img
           src={product.previewImage}
-          className="h-full w-full object-cover rounded-2xl"
+          className={`h-full w-full object-cover rounded-2xl ${
+            isOutOfStock ? "grayscale" : ""
+          }`}
         />
       </div>
       <div className="flex items-center justify-around h-15">
@@ -43,7 +54,7 @@ export function ProductTarget({ product }: ProductTargetProps) {
       <div className="flex w-full wrap gap-2 p-1">
         {product.colors.map((color, i) => (
           <span
-            className="rounded-2xl border-1 border-foreground-description p-1 hover:cursor-pointer"
+            className="rounded-2xl border-1 border-foreground-description p-1 hover:cursor-pointer truncate"
             key={i}
           >
             {color}

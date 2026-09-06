@@ -6,6 +6,8 @@ interface FilterState {
   category: string;
   minPrice: number;
   maxPrice: number;
+  onlyOffered: boolean;
+  showOutOfStock: boolean;
 }
 interface FilterContextType {
   filters: FilterState;
@@ -28,7 +30,9 @@ export const FilterProvider = ({ children }:{children:ReactNode}) => {
     name:"",
     category:"all",
     minPrice:0,
-    maxPrice:0
+    maxPrice:0,
+    onlyOffered:false,
+    showOutOfStock:true
   });
 
 
@@ -47,6 +51,14 @@ export const FilterProvider = ({ children }:{children:ReactNode}) => {
         (
           filters.maxPrice == 0 ||
           product.price <= filters.maxPrice
+        ) &&
+        (
+          !filters.onlyOffered ||
+          product.offered?.isOffered === true
+        ) &&
+        (
+          filters.showOutOfStock ||
+          product.stock > 0
         )
       )
     })

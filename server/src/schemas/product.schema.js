@@ -10,6 +10,7 @@ export const addProductSchema = z.object({
     price: z.number({
         required_error: 'Price is required.'
     }),
+    originalPrice: z.number().optional(),
     colors: z.array(z.string(), {
         required_error: 'Colors is required.'
     }),

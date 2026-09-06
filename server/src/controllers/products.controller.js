@@ -1,8 +1,18 @@
 import Product from '../models/product.model.js'
+import User from '../models/user.model.js'
+import Notification from '../models/notification.model.js'
+import { revertExpiredOffers } from '../libs/offerExpiration.js'
+
+const PAGE_SIZE = 8;
 
 export const getAllProducts = async (req, res) => {
     try {
-        const products = await Product.aggregate([
+        await revertExpiredOffers().catch(err => console.error('Error revirtiendo ofertas expiradas:', err));
+
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const skip = (page - 1) * PAGE_SIZE;
+
+        const result = await Product.aggregate([
             {
                 $lookup: {
                     from: "productimages", // 👈 nombre de la colección (plural y en minúscula normalmente)
@@ -20,10 +30,24 @@ export const getAllProducts = async (req, res) => {
                 $project: {
                     images: 0 // 👈 opcional, para no devolver todo el array de imágenes
                 }
+            },
+            {
+                $facet: {
+                    products: [{ $skip: skip }, { $limit: PAGE_SIZE }],
+                    totalCount: [{ $count: "count" }]
+                }
             }
         ]);
 
-        res.json(products);
+        const products = result[0].products;
+        const total = result[0].totalCount[0]?.count || 0;
+
+        res.json({
+            products,
+            page,
+            totalPages: Math.ceil(total / PAGE_SIZE),
+            hasMore: skip + products.length < total
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -31,7 +55,12 @@ export const getAllProducts = async (req, res) => {
 
 export const getProductsActive = async (req, res) => {
     try {
-        const products = await Product.aggregate([
+        await revertExpiredOffers().catch(err => console.error('Error revirtiendo ofertas expiradas:', err));
+
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const skip = (page - 1) * PAGE_SIZE;
+
+        const result = await Product.aggregate([
             { $match: { active: true } },
             {
                 $lookup: {
@@ -50,10 +79,24 @@ export const getProductsActive = async (req, res) => {
                 $project: {
                     images: 0 // 👈 opcional, para no devolver todo el array de imágenes
                 }
+            },
+            {
+                $facet: {
+                    products: [{ $skip: skip }, { $limit: PAGE_SIZE }],
+                    totalCount: [{ $count: "count" }]
+                }
             }
         ]);
 
-        return res.status(200).json(products)
+        const products = result[0].products;
+        const total = result[0].totalCount[0]?.count || 0;
+
+        return res.status(200).json({
+            products,
+            page,
+            totalPages: Math.ceil(total / PAGE_SIZE),
+            hasMore: skip + products.length < total
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -62,6 +105,8 @@ export const getProductsActive = async (req, res) => {
 export const getProduct = async (req, res) => {
     try {
         const { id } = req.params
+
+        await revertExpiredOffers().catch(err => console.error('Error revirtiendo ofertas expiradas:', err));
 
         const product = await Product.findById(id)
 
@@ -74,12 +119,13 @@ export const getProduct = async (req, res) => {
 
 export const addProduct = async (req, res) => {
     try {
-        const { name, description, price, category, productImages, colors, stock, size } = req.body
+        const { name, description, price, originalPrice, category, productImages, colors, stock, size } = req.body
 
         const newProduct = new Product({
             name,
             description,
             price,
+            originalPrice,
             category,
             productImages,
             colors,
@@ -89,6 +135,19 @@ export const addProduct = async (req, res) => {
         })
 
         const saveProduct = await newProduct.save()
+
+        try {
+            const users = await User.find({}, '_id')
+            const newProductNotifications = users.map((user) => ({
+                user: user._id,
+                title: 'Nuevo producto disponible',
+                message: `Ya está disponible un nuevo producto: ${saveProduct.name}. ¡Échale un vistazo!`,
+                type: 'novedades',
+            }))
+            await Notification.insertMany(newProductNotifications)
+        } catch (notificationError) {
+            console.error('Error al crear las notificaciones de nuevo producto:', notificationError.message)
+        }
 
         res.json(saveProduct)
     } catch (error) {

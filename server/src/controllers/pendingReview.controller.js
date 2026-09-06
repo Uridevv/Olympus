@@ -3,7 +3,7 @@ import PendingReview from '../models/pendingReview.model.js'
 export const getPendingReviews = async (req, res) => {
     try {
 
-        const pendingReviews = await PendingReview.find({user:req.params.userId});
+        const pendingReviews = await PendingReview.find({user:req.params.userId}).populate('user').populate('product');
         if (!pendingReviews) return res.status(404).json({ message: "No pending reviews found" })
             
         return res.status(200).json(pendingReviews)

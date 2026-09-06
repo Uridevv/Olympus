@@ -33,6 +33,10 @@ export const productModel = new mongoose.Schema({
         require: true,
         trim: true,
     },
+    originalPrice: {
+        type: Number,
+        default: null,
+    },
     colors: {
         type: [String],
         require: true,

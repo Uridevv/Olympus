@@ -25,6 +25,7 @@ import { WIshList } from "@/pages/WIshList";
 import { Success } from "@/pages/Success";
 import { Profile } from "@/pages/Profile";
 import { Offers } from "@/pages/Offers";
+import { OfferDetailPage } from "@/pages/OfferDetailPage";
 import { Accessories } from "@/pages/Accessories";
 import { TermsAndConditions } from "@/pages/TermsAndConditions";
 import { TwoFactorVerification } from "@/pages/TwoFactorVerification";
@@ -65,6 +66,8 @@ import { Reviews } from "./pages/Reviews";
 import { PendingReviews } from "./pages/PendingReviews";
 import { EditReview } from "./pages/EditReview";
 import { News } from "./pages/News";
+import { NewForm } from "./components/admin/others/news/NewForm";
+
 
 function App() {
   const checkLogin = useAuth((state) => state.checkLogin);
@@ -123,6 +126,10 @@ function App() {
         {
           path: "/offers/termsAndConditions/",
           element: <TermsAndConditions />,
+        },
+        {
+          path: "/offers/:id",
+          element: <OfferDetailPage />,
         },
 
         {
@@ -279,6 +286,14 @@ function App() {
             {
               path: "settings/news",
               element: <AdminNews />,
+            },
+            {
+              path: "settings/news/create",
+              element: <NewForm />,
+            },
+            {
+              path: "settings/news/create/:id",
+              element: <NewForm />,
             },
             {
               path: "settings/orders",

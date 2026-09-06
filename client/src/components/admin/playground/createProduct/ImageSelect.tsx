@@ -1,6 +1,14 @@
 import { ProductImageSelect } from "./ProductImageSelect.jsx";
 import { useEffect, useState } from "react";
-import { ProductImageSelec } from "@/types/productType.js";
+import { ProductImageSelec } from "@/Types/productType";
+import { X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ImageSelectProps {
   productImages: ProductImageSelec[]; // Cambia el tipo según tu necesidad
@@ -49,7 +57,7 @@ export function ImageSelect({ productImages, setProductImages, colors }:ImageSel
   }, [colors]);
 
   return (
-    <div className="mt-4 flex gap-4 flex-wrap">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
       <ProductImageSelect
         addProductImage={addProductImage}
         color={ImageColor? ImageColor : colors[0]} // Cambia el color según tu necesidad
@@ -68,36 +76,48 @@ export function ImageSelect({ productImages, setProductImages, colors }:ImageSel
         }
         return (
           <div
-            className="h-40 grow min-w-40 p-4 border-1 border-dashed border-gray-600 flex relative"
+            className="group relative flex flex-col overflow-hidden rounded-xl border bg-card"
             key={index}
           >
-            <div className="h-full w-1/2 flex ">
+            <div className="relative aspect-square w-full overflow-hidden bg-muted">
               {imageUrl ? (
                 <img
                   src={imageUrl}
                   alt={`Product ${index}`}
-                  className="object-cover h-full"
+                  className="h-full w-full object-cover"
                 />
               ) : (
-                <span className="text-gray-500">No image available</span>
+                <div className="flex h-full w-full items-center justify-center text-center text-xs text-muted-foreground">
+                  Sin imagen disponible
+                </div>
               )}
+              <button
+                type="button"
+                onClick={() => deleteProduct(image)}
+                className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity hover:bg-destructive group-hover:opacity-100"
+              >
+                <X className="size-4" />
+                <span className="sr-only">Eliminar imagen</span>
+              </button>
             </div>
-            <select
-              onChange={(e) => onChangeColor(index, e.target.value)}
-              className="bg-transparent"
-              value={image.color} // Establecer el valor seleccionado aquí
-            >
-              {colors.map((color, i) => (
-                <option value={color} key={i} className="bg-neutral-900">
-                  {color}
-                </option>
-              ))}
-            </select>
 
-            <i
-              className="fa-solid fa-circle-xmark absolute right-2  text-red-900 text-xl hover:cursor-pointer hover:text-red-600"
-              onClick={() => deleteProduct(image)}
-            ></i>
+            <div className="p-2">
+              <Select
+                value={image.color}
+                onValueChange={(value) => onChangeColor(index, value)}
+              >
+                <SelectTrigger size="sm" className="w-full">
+                  <SelectValue placeholder="Color" />
+                </SelectTrigger>
+                <SelectContent>
+                  {colors.map((color, i) => (
+                    <SelectItem value={color} key={i}>
+                      {color}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         );
       })}

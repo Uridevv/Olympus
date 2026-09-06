@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { addProduct, getProduct, deleteProduct, getAllProducts, updateProduct, changeProductStatus, getProductsActive } from '../controllers/products.controllers.js'
+import { addProduct, getProduct, deleteProduct, getAllProducts, updateProduct, changeProductStatus, getProductsActive } from '../controllers/products.controller.js'
 import { validateSchema } from '../middlewares/validateSchema.js'
 import { addProductSchema } from '../schemas/product.schema.js'
 

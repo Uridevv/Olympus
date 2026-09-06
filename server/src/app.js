@@ -19,6 +19,8 @@ import resendRoutes from './routes/resend.routes.js'
 import userSettingsRoutes from './routes/userSettings.routes.js'
 import pendingReviewsRoutes from './routes/pendingReviews.routes.js'
 import reviewsRoutes from './routes/review.routes.js'
+import newRoutes from './routes/new.routes.js'
+import notificationRoutes from './routes/notification.routes.js'
 
 
 // Cors Modules.
@@ -55,6 +57,9 @@ app.use('/api', resendRoutes)
 app.use('/api', userSettingsRoutes)
 app.use('/api', pendingReviewsRoutes)
 app.use('/api', reviewsRoutes)
+app.use('/api', newRoutes)
+app.use('/api', notificationRoutes)
+
 
 app.get("/", (req, res) => res.send("Express on Vercel"));
 

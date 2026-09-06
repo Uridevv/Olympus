@@ -6,9 +6,23 @@ type ProductAdd = Omit<Product, "id" | "_id" | "active" | "offered" | "previewIm
 interface GetAllProductsResponse extends Product{
   previewImage:string
 }
-export const getAllProducts = () => axios.get<GetAllProductsResponse[]>("/getAllProducts");
 
-export const getAllProductsActive = () => axios.get<GetAllProductsResponse[]>("/getAllProductsActive");
+export interface PaginatedProductsResponse {
+  products: GetAllProductsResponse[];
+  page: number;
+  totalPages: number;
+  hasMore: boolean;
+}
+
+export const getAllProducts = (page = 1) =>
+  axios.get<PaginatedProductsResponse>("/getAllProducts", {
+    params: { page },
+  });
+
+export const getAllProductsActive = (page = 1) =>
+  axios.get<PaginatedProductsResponse>("/getAllProductsActive", {
+    params: { page },
+  });
 
 export const getProduct = (id: string) =>
   axios.get<Product>(`/getProduct/${id}`);

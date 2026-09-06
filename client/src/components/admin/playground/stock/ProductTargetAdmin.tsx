@@ -10,6 +10,7 @@ export function ProductTargetAdmin({ product }: { product: Product }) {
   const [imgProduct, setImgProduct] = useState<string>();
   const navigate = useNavigate();
   const [active, setActive] = useState<boolean>(product.active);
+  const isOutOfStock = product.stock <= 0;
 
   useEffect(() => {
     async function getImg() {
@@ -32,7 +33,7 @@ export function ProductTargetAdmin({ product }: { product: Product }) {
   return (
     <div
       className={
-        `rounded-2xl flex flex-col gap-3 hover:bg-secondary-background transition duration-75 ease-in-out h-[27em] text-foreground p-2 box-border w-full relative ${active ? "" : "filter: contrast-60"}`
+        `rounded-2xl flex flex-col gap-3 hover:bg-secondary-background transition duration-75 ease-in-out h-[27em] text-foreground p-2 box-border w-full relative ${active ? "" : "filter: contrast-60"} ${isOutOfStock ? "outline outline-2 outline-red-500/60" : ""}`
       }
       onClick={() => {
         navigate(`/admin/playground/update-product/${product._id}`);
@@ -50,11 +51,20 @@ export function ProductTargetAdmin({ product }: { product: Product }) {
           <p className="text-white">Inactive</p>
         )}
       </div>
+      {isOutOfStock && (
+        <div className="flex items-center justify-center h-5 absolute w-1/2 left-2 top-2 rounded-br-lg drop-shadow-lg bg-neutral-900 border border-white/20 z-10">
+          <p className="text-white text-xs font-bold uppercase tracking-wide">
+            Agotado
+          </p>
+        </div>
+      )}
       <div className="h-70 flex justify-center w-full rounded-sm">
         <img
           src={imgProduct}
           alt="IMG"
-          className="h-full object-cover w-full rounded-sm"
+          className={`h-full object-cover w-full rounded-sm ${
+            isOutOfStock ? "grayscale" : ""
+          }`}
         />
       </div>
 

@@ -41,6 +41,15 @@ const reviewSchema = new mongoose.Schema({
     ],
     default: [],
   },
+  alreadyDisliked: {
+    type: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      }
+    ],
+    default: [],
+  },
 
 }, {
   timestamps: true,

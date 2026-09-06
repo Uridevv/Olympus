@@ -1,7 +1,9 @@
 import { Router } from 'express'
-import { getOnePurchase,getPurchases } from '../controllers/purchase.controllers.js'
+import { getOnePurchase,getPurchases,getAllPurchases } from '../controllers/purchase.controller.js'
 
 const router = Router();
+
+router.get("/getAllPurchases", getAllPurchases)
 
 router.get("/getPurchases/:id", getPurchases)
 

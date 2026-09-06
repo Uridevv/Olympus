@@ -29,7 +29,12 @@ export const PurchaseProvider = ({ children }: { children: ReactNode }) => {
       const user = useAuth.getState().user;
       const userId = user?._id || "";
       const res = await getPurchases(userId);
-      if (res) setPurchases(res.data);
+      if (res) {
+        const sorted = [...res.data].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        setPurchases(sorted);
+      }
     } catch (error) {
       console.error(error);
     }

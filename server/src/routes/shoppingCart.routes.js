@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getShoppingCart, disableShoppingCart, addItemToCart, removeItemFromCart, createOrUpdateShoppingCart, successShoppingCart, updateCartItem, decreaseCartItem } from '../controllers/shoppingCart.controllers.js'
+import { getShoppingCart, disableShoppingCart, addItemToCart, removeItemFromCart, createOrUpdateShoppingCart, successShoppingCart, updateCartItem, decreaseCartItem } from '../controllers/shoppingCart.controller.js'
 import { validateSchema } from '../middlewares/validateSchema.js'
 
 

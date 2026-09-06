@@ -39,7 +39,6 @@ export const sendOtp = async (req, res) => {
 export const validateOTP = async (req, res) => {
     try {
         const { email, otp } = req.body;
-        console.log(req.body)
         const OTPFound = await OTP.findOne({ email: email })
         if (!OTPFound) return res.status(404).json({ message: "OTP not found" })
 

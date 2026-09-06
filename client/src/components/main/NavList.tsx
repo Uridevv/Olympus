@@ -9,8 +9,11 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import navImg from '@/assets/img/Hecate Emblem.jpg'
+import { useFilter } from "@/context/FilterContext";
 
 export function NavList() {
+  const { setFilters } = useFilter();
+
   return (
     <NavigationMenu viewport={false} className="z-50">
       <NavigationMenuList>
@@ -34,9 +37,6 @@ export function NavList() {
                   </a>
                 </NavigationMenuLink>
               </li>
-              <ListItem href="/shop" title="Shop">
-                Acces to all your information, your deliveries, and more.
-              </ListItem>
               <ListItem href="/offers" title="Offers">
                 Dedicated seccion to oferrs and special disscounts.
               </ListItem>
@@ -52,7 +52,15 @@ export function NavList() {
             <ul className="grid w-[300px] gap-4">
               <li>
                 <NavigationMenuLink asChild>
-                  <Link to="/ropa-page">
+                  <Link
+                    to="/ropa-page"
+                    onClick={() =>
+                      setFilters((prevState) => ({
+                        ...prevState,
+                        onlyOffered: false,
+                      }))
+                    }
+                  >
                     <div className="font-medium">All Clothes</div>
                     <div className="text-muted-foreground">
                       Browse all mens clothing in the shop.
@@ -60,18 +68,18 @@ export function NavList() {
                   </Link>
                 </NavigationMenuLink>
                 <NavigationMenuLink asChild>
-                  <Link to="/ropa-page">
+                  <Link
+                    to="/ropa-page"
+                    onClick={() =>
+                      setFilters((prevState) => ({
+                        ...prevState,
+                        onlyOffered: true,
+                      }))
+                    }
+                  >
                     <div className="font-medium">Offered Clothes</div>
                     <div className="text-muted-foreground">
                       Browse all clothes with a discount.
-                    </div>
-                  </Link>
-                </NavigationMenuLink>
-                <NavigationMenuLink asChild>
-                  <Link to="/ropa-page">
-                    <div className="font-medium">Womens CLothing</div>
-                    <div className="text-muted-foreground">
-                      Browse all oversize clothing in the shop.
                     </div>
                   </Link>
                 </NavigationMenuLink>

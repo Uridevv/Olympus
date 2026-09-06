@@ -10,7 +10,7 @@ export function PurchaseDetailCard({ purchase }: { purchase: Purchase }) {
 
   return (
     <div className="h-[80vh] bg-card rounded-lg border p-4 shadow-sm hover:shadow-md transition-shadow flex gap-4">
-      <div className="aspect-square h-full w-2/5 mb-4 bg-muted rounded-lg overflow-hidden">
+      <div className="aspect-square h-full w-4/5 mb-4 bg-muted rounded-lg overflow-hidden">
         <img
           src={purchase.productImg.url || "/placeholder.svg"}
           alt={purchase.productBought.name}

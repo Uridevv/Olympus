@@ -23,6 +23,9 @@ const pendingReviewSchema = new mongoose.Schema({
     default: Date.now,
     expires: '90d', // opcional: elimina automáticamente pendientes muy viejos
   },
-});
+}, {
+  timestamps: true
+}
+);
 
 export default mongoose.model('PendingReview', pendingReviewSchema);

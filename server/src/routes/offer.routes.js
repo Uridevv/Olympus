@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { validateSchema } from '../middlewares/validateSchema.js'
-import { createOffer, getAllOffers, getOneOffer, updateOffer, deleteOffer, uploadSingleImage,getProductsInOffer, getOffersByProduct } from '../controllers/offer.controllers.js'
+import { createOffer, getAllOffers, getOneOffer, updateOffer, deleteOffer, uploadSingleImage,getProductsInOffer, getOffersByProduct } from '../controllers/offer.controller.js'
 import { OfferSchema } from '../schemas/offer.schema.js'
 
 const router = Router();

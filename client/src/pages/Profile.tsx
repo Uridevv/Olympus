@@ -1,5 +1,5 @@
 import type React from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { AppSidebar } from "@/components/app-sidebar-profile";
 import { usePurchase } from "@/context/PurchaseContext";
 import {
@@ -20,8 +20,24 @@ import { useEffect } from "react";
 import { Footer } from "@/components/main/Footer";
 import { Toaster } from "sonner";
 
+const sectionTitles: { match: string; title: string }[] = [
+  { match: "/profile/wishlist", title: "Lista de Deseos" },
+  { match: "/profile/notifications", title: "Notificaciones" },
+  { match: "/profile/settings", title: "Configuración" },
+  { match: "/profile/purchases", title: "Mis Compras" },
+];
+
+function getSectionTitle(pathname: string) {
+  return (
+    sectionTitles.find((section) => pathname.startsWith(section.match))
+      ?.title ?? "Mis Compras"
+  );
+}
+
 export function Profile() {
   const { getAllPurchases, purchases } = usePurchase();
+  const location = useLocation();
+  const sectionTitle = getSectionTitle(location.pathname);
 
   useEffect(() => {
     const loadPurchases = async () => {
@@ -49,31 +65,33 @@ export function Profile() {
     <SidebarProvider
       style={
         {
-          "--sidebar-width": "350px",
+          "--sidebar-width": "17rem",
         } as React.CSSProperties
       }
     >
       <AppSidebar />
-      <SidebarInset>
-        <header className="sticky top-0 flex shrink-0 items-center gap-2 border-b bg-background p-4">
+      <SidebarInset className="min-w-0">
+        <header className="sticky top-0 z-10 flex shrink-0 items-center gap-2 border-b bg-background p-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">Mi Perfil</BreadcrumbLink>
+                <BreadcrumbLink href="/profile">Mi Perfil</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbPage>Compras Realizadas</BreadcrumbPage>
+                <BreadcrumbPage>{sectionTitle}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
         </header>
+        <div className="mx-auto w-full max-w-6xl flex-1">
           <Outlet />
+        </div>
         <Footer />
       </SidebarInset>
-      <Toaster />
+      <Toaster position="bottom-right" richColors />
     </SidebarProvider>
   );
 }

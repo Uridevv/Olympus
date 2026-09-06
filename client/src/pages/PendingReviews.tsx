@@ -16,29 +16,43 @@ import {
 } from "@/components/ui/table";
 import { MoreHorizontalIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getPendingReviews } from "@/api/pendingReviews";
+import { getPendingReviews, deletePendingReview } from "@/api/pendingReviews";
 import { useAuth } from "@/store/authStore";
 import { PendingReview } from "@/Types/pendingReview";
 import noReviewsImage from "@/assets/svg/undraw_empty_4zx0.svg";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export function PendingReviews() {
   const { user } = useAuth();
   const [pendingReviews, setPendingReviews] = useState<PendingReview[]>([]);
   const navigate = useNavigate();
 
+  const loadPendingReviews = async () => {
+    try {
+      const res = await getPendingReviews(user?._id || "");
+      setPendingReviews(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
-    const loadPendingReviews = async () => {
-      try {
-        const res = await getPendingReviews(user?._id || "");
-        setPendingReviews(res.data);
-        console.log(res.data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
     loadPendingReviews();
   }, []);
+
+  const handleDelete = async (pendingReviewId: string) => {
+    try {
+      await deletePendingReview(pendingReviewId);
+      setPendingReviews((prev) =>
+        prev.filter((review) => review._id !== pendingReviewId)
+      );
+      toast.success("Pending review removed");
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to remove pending review");
+    }
+  };
 
   if (pendingReviews.length === 0) {
     return (
@@ -62,18 +76,27 @@ export function PendingReviews() {
       <Table className="w-full">
         <TableHeader>
           <TableRow>
+            <TableHead>Product</TableHead>
             <TableHead>Date</TableHead>
-            <TableHead>Time</TableHead>
-            <TableHead className="text-center">Rating</TableHead>
             <TableHead className="text-right">Options</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {pendingReviews.map((review) => (
             <TableRow key={review._id}>
-              <TableCell>{review.createdAt}</TableCell>
-              <TableCell>{review.createdAt}</TableCell>
-              <TableCell className="text-center">{review._id}</TableCell>
+              <TableCell className="flex items-center gap-3">
+                {review.product?.previewImage && (
+                  <img
+                    src={review.product.previewImage}
+                    alt={review.product.name}
+                    className="h-10 w-10 rounded-md object-cover"
+                  />
+                )}
+                {review.product?.name}
+              </TableCell>
+              <TableCell>
+                {new Date(review.createdAt).toLocaleDateString()}
+              </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -85,9 +108,12 @@ export function PendingReviews() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={()=>{
                       navigate(`/profile/pending-reviews/${review._id}`)
-                    }}>Edit</DropdownMenuItem>
+                    }}>Write review</DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive">
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => handleDelete(review._id)}
+                    >
                       Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>

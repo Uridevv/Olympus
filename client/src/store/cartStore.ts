@@ -7,6 +7,7 @@ import {
   addItemToCart,
   removeItemToCart,
   decreaseItemToCart,
+  successShoppingCart,
 } from "../api/shoppingCart.ts";
 
 interface CartStore {
@@ -19,6 +20,7 @@ interface CartStore {
   addQuantity: (product: CartProductAdd) => void;
   decreaseQuantity: (product: CartProductAdd) => void;
   deleteProductCart: (product: CartProductAdd) => void;
+  clearCart: () => Promise<void>;
 }
 
 export const useCart = create<CartStore>((set, get) => ({
@@ -84,8 +86,11 @@ export const useCart = create<CartStore>((set, get) => ({
   },
 
   addToCart: async (product) => {
-    const userId = useAuth.getState().user?._id;
+    const user = useAuth.getState().user;
+    const userId = user?._id;
     if (!userId) return console.warn("Usuario no autenticado");
+    if (user?.role === "admin" || user?.role === "manager")
+      return console.warn("Los administradores no pueden agregar productos al carrito");
 
     try {
       const newItem = {
@@ -177,6 +182,19 @@ export const useCart = create<CartStore>((set, get) => ({
     } catch (error) {
       console.error("Error al eliminar producto del carrito:", error);
     }
+  },
+
+  clearCart: async () => {
+    const userId = useAuth.getState().user?._id;
+    if (!userId) return console.warn("Usuario no autenticado");
+
+    try {
+      await successShoppingCart(userId);
+    } catch (error) {
+      console.error("Error al vaciar el carrito tras la compra:", error);
+    }
+
+    await get().initializeCart();
   },
 
   setCartCookies: () => {

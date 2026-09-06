@@ -79,24 +79,24 @@ export function NavBar() {
       <div className="w-2/7 flex items-center justify-around max-md:hidden">
         {isAuthenticated ? (
           <>
-            {user?.role === "admin" ? (
-              <a href={"/admin"}>
+            {user?.role === "admin" || user?.role === "manager" ? (
+              <Link to={"/admin"}>
                 <ShieldUser />
-              </a>
+              </Link>
             ) : (
               <>
-                <a href="/profile">
+                <Link to={"/profile"}>
                   <UserCircle />
-                </a>
+                </Link>
+                <Link to={"/wishList"}>
+                  <Heart />
+                </Link>
+
+                <Link to={"/cart"}>
+                  <ShoppingCart />
+                </Link>
               </>
             )}
-            <Link to={"/wishList"}>
-              <Heart />
-            </Link>
-
-            <Link to={"/cart"}>
-              <ShoppingCart />
-            </Link>
 
             <button
               className="principal-btn hover:cursor-pointer"

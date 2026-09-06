@@ -1,6 +1,14 @@
 import successImage from '@/assets/img/success.jpg'
+import { useEffect } from 'react'
+import { useCart } from '@/store/cartStore.js'
 
 export function Success() {
+  const clearCart = useCart((state) => state.clearCart);
+
+  useEffect(() => {
+    clearCart();
+  }, []);
+
   return (
     <div className="p-20 max-w-5xl mx-auto sm:py-16 sm:px-24">
       <div className="flex flex-col-reverse gap-2 sm:flex-row">

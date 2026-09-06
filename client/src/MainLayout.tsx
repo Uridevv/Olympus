@@ -22,7 +22,7 @@ export function MainLayout() {
         </motion.div>
       </AnimatePresence> */}
       <Outlet/>
-      <Toaster/>
+      <Toaster position="bottom-right" richColors/>
       <Footer />
       <ScrollRestoration />
     </>

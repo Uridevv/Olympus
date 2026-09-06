@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getPendingReviews, deletePendingReview, getOnePendingReview } from '../controllers/pendingReview.controllers.js'
+import { getPendingReviews, deletePendingReview, getOnePendingReview } from '../controllers/pendingReview.controller.js'
 
 const router = Router();
 

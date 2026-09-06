@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm, SubmitHandler } from "react-hook-form";
-import { useEffect, useState } from "react";
-import { TicketMinus, Filter } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { TicketMinus, Filter, SquareCheckBig, Square } from "lucide-react";
 import {
   createOffer,
   getOneOffer,
@@ -14,12 +14,22 @@ import {
   deleteOffer,
   getProductsInOffer,
 } from "@/api/offer";
-import { Offer, OfferFormData } from "@/types/offerType";
+import { Offer, OfferFormData } from "@/Types/offerType";
 import { Textarea } from "@/components/ui/textarea";
 import { useProduct } from "@/store/productStore";
 import { FormProductOfferTarget } from "@/components/admin/others/offers/FormProductOfferTarget";
 import { useAuth } from "@/store/authStore";
-import { Product } from "@/types/productType";
+import { useCategory } from "@/context/CategoryContext";
+import { Product } from "@/Types/productType";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function OfferForm({
   className,
@@ -35,9 +45,72 @@ export function OfferForm({
     getValues,
   } = useForm<OfferFormData>();
   const { productsActive } = useProduct();
+  const { categories } = useCategory();
   const [productsInOffer, setProductsInOffer] = useState<string[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [offer, setOffer] = useState<Offer>();
   const [isLoading, setIsLoading] = useState(true);
+
+  // La lista de productos activos viene paginada; hay que traer todas las
+  // páginas para que el formulario pueda ofrecer todos los productos disponibles.
+  useEffect(() => {
+    let cancelled = false;
+    async function loadAllActiveProducts() {
+      while (!cancelled && useProduct.getState().hasMoreProductsActive) {
+        // Si ya hay una carga en curso (p.ej. la carga inicial disparada al
+        // importar el store), hay que ceder el hilo con un macrotask real
+        // (setTimeout) en vez de seguir en un loop de solo microtasks: si no,
+        // el loop nunca deja que la promesa del fetch en curso se resuelva y
+        // el tab se cuelga/crashea.
+        if (useProduct.getState().isLoadingProductsActive) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          continue;
+        }
+        await useProduct.getState().loadMoreProductsActive();
+      }
+    }
+    loadAllActiveProducts();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filteredProducts = useMemo(
+    () =>
+      categoryFilter === "all"
+        ? productsActive
+        : productsActive.filter((product) => product.category === categoryFilter),
+    [productsActive, categoryFilter]
+  );
+
+  const selectableFilteredIds = useMemo(
+    () =>
+      filteredProducts
+        .filter((product) => {
+          const isOutOfStock = product.stock <= 0;
+          const belongsToCurrentOffer =
+            !!params.id && product.offered.offers.includes(params.id);
+          const isLockedByOtherOffer =
+            product.offered.isOffered && !belongsToCurrentOffer;
+          return !isOutOfStock && !isLockedByOtherOffer;
+        })
+        .map((product) => product._id),
+    [filteredProducts, params.id]
+  );
+
+  const allFilteredSelected =
+    selectableFilteredIds.length > 0 &&
+    selectableFilteredIds.every((id) => productsInOffer.includes(id));
+
+  const handleToggleSelectAll = () => {
+    setProductsInOffer((prev) => {
+      if (allFilteredSelected) {
+        const idsToRemove = new Set(selectableFilteredIds);
+        return prev.filter((id) => !idsToRemove.has(id));
+      }
+      return Array.from(new Set([...prev, ...selectableFilteredIds]));
+    });
+  };
 
   const onSubmit: SubmitHandler<OfferFormData> = async (values) => {
     const userId = useAuth.getState().user?._id;
@@ -253,24 +326,74 @@ export function OfferForm({
             </div>
 
             <div className="flex flex-col gap-5">
-              <div className="flex justify-between">
+              <div className="flex items-center justify-between">
                 <Label>Products in Offer</Label>
-                <Filter
-                  className="hover:bg-neutral-700 rounded-lg p-1"
-                  size={35}
-                />
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handleToggleSelectAll}
+                    disabled={selectableFilteredIds.length === 0}
+                    className="hover:bg-neutral-700 rounded-lg p-1 disabled:pointer-events-none disabled:opacity-40"
+                    title={allFilteredSelected ? "Desmarcar todos" : "Marcar todos"}
+                  >
+                    {allFilteredSelected ? (
+                      <SquareCheckBig size={35} />
+                    ) : (
+                      <Square size={35} />
+                    )}
+                  </button>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="hover:bg-neutral-700 rounded-lg p-1 relative"
+                        title="Filtrar por categoría"
+                      >
+                        <Filter size={35} />
+                        {categoryFilter !== "all" && (
+                          <span className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-primary" />
+                        )}
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Filtrar por categoría</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuRadioGroup
+                        value={categoryFilter}
+                        onValueChange={setCategoryFilter}
+                      >
+                        <DropdownMenuRadioItem value="all">
+                          Todas las categorías
+                        </DropdownMenuRadioItem>
+                        {categories.map((category) => (
+                          <DropdownMenuRadioItem value={category._id} key={category._id}>
+                            {category.name}
+                          </DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
 
-              <div className="w-full grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-5">
-                {productsActive.map((product) => (
-                  <FormProductOfferTarget
-                    product={product}
-                    setProductsInOffer={setProductsInOffer}
-                    key={product._id}
-                    checkedDefault={productsInOffer.includes(product._id)}
-                  />
-                ))}
-              </div>
+              {filteredProducts.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">
+                  No hay productos disponibles en esta categoría.
+                </p>
+              ) : (
+                <div className="w-full grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-5">
+                  {filteredProducts.map((product) => (
+                    <FormProductOfferTarget
+                      product={product}
+                      setProductsInOffer={setProductsInOffer}
+                      key={product._id}
+                      checkedDefault={productsInOffer.includes(product._id)}
+                      currentOfferId={params.id}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="flex justify-between items-center text-background">
@@ -290,7 +413,7 @@ export function OfferForm({
                   className="text-foreground border-1 bg-red-800 rounded-sm w-1/3 m-auto p-3 hover:bg-red-700 hover:cursor-pointer h-10 flex items-center justify-center"
                   onClick={OnHandleDelete}
                 >
-                  Delete Product
+                  Delete Offer
                 </button>
               )}
             </div>

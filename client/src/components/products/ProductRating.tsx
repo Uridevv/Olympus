@@ -1,16 +1,9 @@
 import { Bar, BarChart, XAxis, YAxis } from "recharts"
 import {  CardContent } from "@/components/ui/card"
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { Review } from "@/Types/review"
 
 export const description = "A product rating chart"
-
-const chartData = [
-  { rating: "5", count: 245, fill: "var(--color-5-stars)" },
-  { rating: "4", count: 180, fill: "var(--color-4-stars)" },
-  { rating: "3", count: 95, fill: "var(--color-3-stars)" },
-  { rating: "2", count: 45, fill: "var(--color-2-stars)" },
-  { rating: "1", count: 25, fill: "var(--color-1-star)" },
-]
 
 const chartConfig = {
   count: {
@@ -38,7 +31,13 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function ProductRating() {
+export function ProductRating({ reviews }: { reviews: Review[] }) {
+  const chartData = [5, 4, 3, 2, 1].map((stars) => ({
+    rating: stars.toString(),
+    count: reviews.filter((review) => Math.round(review.rating) === stars).length,
+    fill: `var(--color-${stars}-star${stars === 1 ? "" : "s"})`,
+  }));
+
   return (
     <div className="h-full">
       <CardContent>

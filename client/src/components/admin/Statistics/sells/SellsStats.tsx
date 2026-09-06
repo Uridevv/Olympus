@@ -23,123 +23,85 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { getAllPurchases } from "@/api/purchases"
+import { Purchase } from "@/types/purchaseType"
 
 export const description = "An interactive area chart"
 
-const chartData = [
-  { date: "2024-04-01", t_shirts: 222, pants: 150 },
-  { date: "2024-04-02", t_shirts: 97, pants: 180 },
-  { date: "2024-04-03", t_shirts: 167, pants: 120 },
-  { date: "2024-04-04", t_shirts: 242, pants: 260 },
-  { date: "2024-04-05", t_shirts: 373, pants: 290 },
-  { date: "2024-04-06", t_shirts: 301, pants: 340 },
-  { date: "2024-04-07", t_shirts: 245, pants: 180 },
-  { date: "2024-04-08", t_shirts: 409, pants: 320 },
-  { date: "2024-04-09", t_shirts: 59, pants: 110 },
-  { date: "2024-04-10", t_shirts: 261, pants: 190 },
-  { date: "2024-04-11", t_shirts: 327, pants: 350 },
-  { date: "2024-04-12", t_shirts: 292, pants: 210 },
-  { date: "2024-04-13", t_shirts: 342, pants: 380 },
-  { date: "2024-04-14", t_shirts: 137, pants: 220 },
-  { date: "2024-04-15", t_shirts: 120, pants: 170 },
-  { date: "2024-04-16", t_shirts: 138, pants: 190 },
-  { date: "2024-04-17", t_shirts: 446, pants: 360 },
-  { date: "2024-04-18", t_shirts: 364, pants: 410 },
-  { date: "2024-04-19", t_shirts: 243, pants: 180 },
-  { date: "2024-04-20", t_shirts: 89, pants: 150 },
-  { date: "2024-04-21", t_shirts: 137, pants: 200 },
-  { date: "2024-04-22", t_shirts: 224, pants: 170 },
-  { date: "2024-04-23", t_shirts: 138, pants: 230 },
-  { date: "2024-04-24", t_shirts: 387, pants: 290 },
-  { date: "2024-04-25", t_shirts: 215, pants: 250 },
-  { date: "2024-04-26", t_shirts: 75, pants: 130 },
-  { date: "2024-04-27", t_shirts: 383, pants: 420 },
-  { date: "2024-04-28", t_shirts: 122, pants: 180 },
-  { date: "2024-04-29", t_shirts: 315, pants: 240 },
-  { date: "2024-04-30", t_shirts: 454, pants: 380 },
-  { date: "2024-05-01", t_shirts: 165, pants: 220 },
-  { date: "2024-05-02", t_shirts: 293, pants: 310 },
-  { date: "2024-05-03", t_shirts: 247, pants: 190 },
-  { date: "2024-05-04", t_shirts: 385, pants: 420 },
-  { date: "2024-05-05", t_shirts: 481, pants: 390 },
-  { date: "2024-05-06", t_shirts: 498, pants: 520 },
-  { date: "2024-05-07", t_shirts: 388, pants: 300 },
-  { date: "2024-05-08", t_shirts: 149, pants: 210 },
-  { date: "2024-05-09", t_shirts: 227, pants: 180 },
-  { date: "2024-05-10", t_shirts: 293, pants: 330 },
-  { date: "2024-05-11", t_shirts: 335, pants: 270 },
-  { date: "2024-05-12", t_shirts: 197, pants: 240 },
-  { date: "2024-05-13", t_shirts: 197, pants: 160 },
-  { date: "2024-05-14", t_shirts: 448, pants: 490 },
-  { date: "2024-05-15", t_shirts: 473, pants: 380 },
-  { date: "2024-05-16", t_shirts: 338, pants: 400 },
-  { date: "2024-05-17", t_shirts: 499, pants: 420 },
-  { date: "2024-05-18", t_shirts: 315, pants: 350 },
-  { date: "2024-05-19", t_shirts: 235, pants: 180 },
-  { date: "2024-05-20", t_shirts: 177, pants: 230 },
-  { date: "2024-05-21", t_shirts: 82, pants: 140 },
-  { date: "2024-05-22", t_shirts: 81, pants: 120 },
-  { date: "2024-05-23", t_shirts: 252, pants: 290 },
-  { date: "2024-05-24", t_shirts: 294, pants: 220 },
-  { date: "2024-05-25", t_shirts: 201, pants: 250 },
-  { date: "2024-05-26", t_shirts: 213, pants: 170 },
-  { date: "2024-05-27", t_shirts: 420, pants: 460 },
-  { date: "2024-05-28", t_shirts: 233, pants: 190 },
-  { date: "2024-05-29", t_shirts: 78, pants: 130 },
-  { date: "2024-05-30", t_shirts: 340, pants: 280 },
-  { date: "2024-05-31", t_shirts: 178, pants: 230 },
-  { date: "2024-06-01", t_shirts: 178, pants: 200 },
-  { date: "2024-06-02", t_shirts: 470, pants: 410 },
-  { date: "2024-06-03", t_shirts: 103, pants: 160 },
-  { date: "2024-06-04", t_shirts: 439, pants: 380 },
-  { date: "2024-06-05", t_shirts: 88, pants: 140 },
-  { date: "2024-06-06", t_shirts: 294, pants: 250 },
-  { date: "2024-06-07", t_shirts: 323, pants: 370 },
-  { date: "2024-06-08", t_shirts: 385, pants: 320 },
-  { date: "2024-06-09", t_shirts: 438, pants: 480 },
-  { date: "2024-06-10", t_shirts: 155, pants: 200 },
-  { date: "2024-06-11", t_shirts: 92, pants: 150 },
-  { date: "2024-06-12", t_shirts: 492, pants: 420 },
-  { date: "2024-06-13", t_shirts: 81, pants: 130 },
-  { date: "2024-06-14", t_shirts: 426, pants: 380 },
-  { date: "2024-06-15", t_shirts: 307, pants: 350 },
-  { date: "2024-06-16", t_shirts: 371, pants: 310 },
-  { date: "2024-06-17", t_shirts: 475, pants: 520 },
-  { date: "2024-06-18", t_shirts: 107, pants: 170 },
-  { date: "2024-06-19", t_shirts: 341, pants: 290 },
-  { date: "2024-06-20", t_shirts: 408, pants: 450 },
-  { date: "2024-06-21", t_shirts: 169, pants: 210 },
-  { date: "2024-06-22", t_shirts: 317, pants: 270 },
-  { date: "2024-06-23", t_shirts: 480, pants: 530 },
-  { date: "2024-06-24", t_shirts: 132, pants: 180 },
-  { date: "2024-06-25", t_shirts: 141, pants: 190 },
-  { date: "2024-06-26", t_shirts: 434, pants: 380 },
-  { date: "2024-06-27", t_shirts: 448, pants: 490 },
-  { date: "2024-06-28", t_shirts: 149, pants: 200 },
-  { date: "2024-06-29", t_shirts: 103, pants: 160 },
-  { date: "2024-06-30", t_shirts: 446, pants: 400 },
+const CHART_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
 ]
 
-const chartConfig = {
-  visitors: {
-    label: "Visitors",
-  },
-  t_shirts: {
-    label: "T-shirts",
-    color: "var(--chart-1)",
-  },
-  pants: {
-    label: "Pants",
-    color: "var(--chart-2)",
-  },
-} satisfies ChartConfig
+const sanitizeKey = (value: string) =>
+  value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_")
+
+// The backend populates productBought.category as { name, ... } on this
+// endpoint even though Product types it as a plain string elsewhere.
+const getCategoryName = (category: unknown): string | null => {
+  if (!category) return null
+  if (typeof category === "string") return category
+  if (typeof category === "object" && "name" in category) {
+    const name = (category as { name?: unknown }).name
+    return typeof name === "string" ? name : null
+  }
+  return null
+}
 
 export function ChartAreaInteractive() {
   const [timeRange, setTimeRange] = React.useState("90d")
+  const [purchases, setPurchases] = React.useState<Purchase[]>([])
+  const [loading, setLoading] = React.useState(true)
+
+  React.useEffect(() => {
+    getAllPurchases()
+      .then((res) => setPurchases(res.data))
+      .catch(() => setPurchases([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const categories = React.useMemo(() => {
+    const names = new Set<string>()
+    purchases.forEach((purchase) => {
+      const category = getCategoryName(purchase.productBought?.category)
+      if (category) names.add(category)
+    })
+    return Array.from(names)
+  }, [purchases])
+
+  const chartConfig = React.useMemo(() => {
+    const config: ChartConfig = {}
+    categories.forEach((category, i) => {
+      config[sanitizeKey(category)] = {
+        label: category,
+        color: CHART_COLORS[i % CHART_COLORS.length],
+      }
+    })
+    return config
+  }, [categories]) satisfies ChartConfig
+
+  const chartData = React.useMemo(() => {
+    const byDate = new Map<string, Record<string, number>>()
+    purchases.forEach((purchase) => {
+      const category = getCategoryName(purchase.productBought?.category)
+      if (!category || !purchase.createdAt) return
+      const date = new Date(purchase.createdAt).toISOString().slice(0, 10)
+      const key = sanitizeKey(category)
+      const entry = byDate.get(date) ?? {}
+      entry[key] = (entry[key] ?? 0) + 1
+      byDate.set(date, entry)
+    })
+    return Array.from(byDate.entries())
+      .map(([date, counts]) => ({ date, ...counts }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  }, [purchases])
 
   const filteredData = chartData.filter((item) => {
     const date = new Date(item.date)
-    const referenceDate = new Date("2024-06-30")
+    const referenceDate = new Date()
     let daysToSubtract = 90
     if (timeRange === "30d") {
       daysToSubtract = 30
@@ -155,9 +117,9 @@ export function ChartAreaInteractive() {
     <Card className="pt-0">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1">
-          <CardTitle>Area Chart - Interactive</CardTitle>
+          <CardTitle>Ventas por Categoría</CardTitle>
           <CardDescription>
-            Showing total visitors for the last 3 months
+            Mostrando el total de ventas registradas en la base de datos
           </CardDescription>
         </div>
         <Select value={timeRange} onValueChange={setTimeRange}>
@@ -181,83 +143,92 @@ export function ChartAreaInteractive() {
         </Select>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
-        >
-          <AreaChart data={filteredData}>
-            <defs>
-              <linearGradient id="fillt_shirts" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-t_shirts)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-t_shirts)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-              <linearGradient id="fillpants" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-pants)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-pants)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-            </defs>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value) => {
-                const date = new Date(value)
-                return date.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })
-              }}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })
-                  }}
-                  indicator="dot"
-                />
-              }
-            />
-            <Area
-              dataKey="t_shirts"
-              type="natural"
-              fill="url(#fillpants)"
-              stroke="var(--color-pants)"
-              stackId="a"
-            />
-            <Area
-              dataKey="pants"
-              type="natural"
-              fill="url(#fillt_shirts)"
-              stroke="var(--color-t_shirts)"
-              stackId="a"
-            />
-            <ChartLegend content={<ChartLegendContent />} />
-          </AreaChart>
-        </ChartContainer>
+        {loading ? (
+          <p className="text-center text-sm text-muted-foreground">
+            Cargando ventas...
+          </p>
+        ) : categories.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground">
+            No se encontraron ventas registradas.
+          </p>
+        ) : (
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-auto h-[250px] w-full"
+          >
+            <AreaChart data={filteredData}>
+              <defs>
+                {categories.map((category) => {
+                  const key = sanitizeKey(category)
+                  return (
+                    <linearGradient
+                      key={key}
+                      id={`fill${key}`}
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="5%"
+                        stopColor={`var(--color-${key})`}
+                        stopOpacity={0.8}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor={`var(--color-${key})`}
+                        stopOpacity={0.1}
+                      />
+                    </linearGradient>
+                  )
+                })}
+              </defs>
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={32}
+                tickFormatter={(value) => {
+                  const date = new Date(value)
+                  return date.toLocaleDateString("es-ES", {
+                    month: "short",
+                    day: "numeric",
+                  })
+                }}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(value) => {
+                      return new Date(value).toLocaleDateString("es-ES", {
+                        month: "short",
+                        day: "numeric",
+                      })
+                    }}
+                    indicator="dot"
+                  />
+                }
+              />
+              {categories.map((category) => {
+                const key = sanitizeKey(category)
+                return (
+                  <Area
+                    key={key}
+                    dataKey={key}
+                    type="natural"
+                    fill={`url(#fill${key})`}
+                    stroke={`var(--color-${key})`}
+                    stackId="a"
+                  />
+                )
+              })}
+              <ChartLegend content={<ChartLegendContent />} />
+            </AreaChart>
+          </ChartContainer>
+        )}
       </CardContent>
     </Card>
   )
