@@ -125,3 +125,6 @@ During the development of Olympus, I improved my understanding of building and c
 ## 👨‍💻 Author
 
 Developed as a personal full-stack web development project to practice modern technologies and real-world application architecture.
+
+Web-Page Image
+<img width="1876" height="882" alt="Screenshot 2026-09-25 182413" src="https://github.com/user-attachments/assets/7203eb7a-ad8b-46d6-a346-25417796663d" />
